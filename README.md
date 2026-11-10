@@ -4,6 +4,8 @@ Benchmark RNN, LSTM and GRU against a persistence baseline on hourly weather dat
 
 Dự án học sâu cho chuỗi thời gian: tải dữ liệu thời tiết theo giờ từ **Open-Meteo**, tạo cửa sổ quan sát lịch sử và huấn luyện mô hình **PyTorch** để dự đoán một giá trị nhiệt độ tại chân trời được chọn.
 
+Sau khi [cài thư viện](#cài-đặt), chạy `python scripts/benchmark.py` để huấn luyện và so sánh cả ba mô hình trên bộ dữ liệu đi kèm. Lệnh chạy trên CPU, không cần gọi API.
+
 ![Nhiệt độ thực tế và dự đoán trên tập kiểm tra](docs/media/forecast_plot.png)
 
 Đây là biểu đồ từ lần chạy thật với dữ liệu TP.HCM trong quý I/2025. Dự án hiện đánh giá dự báo trên dữ liệu lịch sử được giữ lại, chưa cung cấp ứng dụng/web hoặc dịch vụ dự báo thời tiết trực tiếp.
@@ -36,11 +38,13 @@ Dữ liệu Open-Meteo theo giờ tại TP.HCM từ 01/01 đến 31/03/2025. C�
 
 Trong lần chạy này, RNN giảm MAE **34,4%** so với persistence. GRU cũng cải thiện cả hai chỉ số, còn LSTM có sai số cao hơn baseline. Kết quả chỉ phản ánh một tập dữ liệu và một seed.
 
+![MAE và RMSE của RNN, GRU, LSTM và persistence trên cùng tập test](docs/media/benchmark-comparison.png)
+
 Biểu đồ trên là kết quả RNN. Xem [benchmark JSON](docs/media/benchmark.json), [đường cong loss](docs/media/loss_curve.png) và [300 dự đoán test](docs/media/predictions.csv).
 
 ## Cài đặt
 
-Cấu hình đã dùng cho benchmark gồm Python 3.11 và PyTorch trên CPU. Không bắt buộc có GPU; cần Internet để tải dữ liệu.
+Cấu hình benchmark dùng Python 3.11 và PyTorch trên CPU. Bộ CSV benchmark có sẵn trong repo. Cần Internet khi tải thêm dữ liệu từ Open-Meteo.
 
 ```bash
 git clone https://github.com/thanq204/Du_Bao_Thoi_Tiet.git
@@ -103,12 +107,10 @@ python train.py --data-path docs/media/weather_data.csv --model rnn --epochs 10 
 ### 3. So sánh các kiến trúc
 
 ```bash
-python train.py --model rnn --epochs 10 --output-dir artifacts/rnn
-python train.py --model lstm --epochs 10 --output-dir artifacts/lstm
-python train.py --model gru --epochs 10 --output-dir artifacts/gru
+python scripts/benchmark.py
 ```
 
-Dùng cùng dữ liệu, seed và cấu hình để so sánh. Mỗi lần chạy chỉ huấn luyện một mô hình; thư mục riêng giúp tránh ghi đè `metrics.json`, biểu đồ và CSV.
+Lệnh mặc định dùng `docs/media/weather_data.csv`, seed 42 và 10 epoch mỗi mô hình. Xem bảng tổng hợp trong `artifacts/benchmark/benchmark.json` và dự đoán, biểu đồ, checkpoint trong các thư mục con `rnn/`, `lstm/`, `gru/`. Để dùng CSV khác, thêm `--data-path data/weather_data.csv`. Có thể đặt `--output-dir` để giữ riêng từng lần chạy.
 
 ### 4. Đổi cửa sổ và chân trời dự báo
 

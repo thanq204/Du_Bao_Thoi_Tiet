@@ -5,9 +5,9 @@ import json
 import random
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from matplotlib.figure import Figure
 
 
 def set_seed(seed: int) -> None:
@@ -35,16 +35,14 @@ def save_json(data: dict[str, object], output_path: Path) -> None:
 
 
 def save_loss_plot(train_losses: list[float], val_losses: list[float], output_path: Path) -> None:
-    plt.figure(figsize=(8, 4.5))
-    plt.plot(train_losses, label="Train loss")
-    plt.plot(val_losses, label="Validation loss")
-    plt.xlabel("Epoch")
-    plt.ylabel("MSE loss")
-    plt.title("Training history")
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig(output_path, dpi=150)
-    plt.close()
+    figure = Figure(figsize=(8, 4.5), layout="tight")
+    axes = figure.subplots()
+    epochs = range(1, len(train_losses) + 1)
+    axes.plot(epochs, train_losses, label="Train loss")
+    axes.plot(epochs, val_losses, label="Validation loss")
+    axes.set(xlabel="Epoch", ylabel="MSE loss", title="Training history")
+    axes.legend()
+    figure.savefig(output_path, dpi=150)
 
 
 def save_prediction_plot(
@@ -53,24 +51,21 @@ def save_prediction_plot(
     output_path: Path,
     timestamps: np.ndarray | None = None,
 ) -> None:
-    plt.figure(figsize=(10, 4.8))
+    figure = Figure(figsize=(10, 4.8), layout="tight")
+    axes = figure.subplots()
     if timestamps is None:
         x_axis = np.arange(len(y_true))
-        plt.xlabel("Time step")
+        axes.set_xlabel("Time step")
     else:
         x_axis = timestamps
-        plt.xlabel("Timestamp")
+        axes.set_xlabel("Timestamp")
+        axes.tick_params(axis="x", labelrotation=30)
 
-    plt.plot(x_axis, y_true, label="Actual", linewidth=2)
-    plt.plot(x_axis, y_pred, label="Predicted", linewidth=2)
-    plt.ylabel("Value")
-    plt.title("Weather forecast on test set")
-    plt.legend()
-    if timestamps is not None:
-        plt.xticks(rotation=30, ha="right")
-    plt.tight_layout()
-    plt.savefig(output_path, dpi=150)
-    plt.close()
+    axes.plot(x_axis, y_true, label="Actual", linewidth=2)
+    axes.plot(x_axis, y_pred, label="Predicted", linewidth=2)
+    axes.set(ylabel="Value", title="Weather forecast on test set")
+    axes.legend()
+    figure.savefig(output_path, dpi=150)
 
 
 def save_predictions_csv(
