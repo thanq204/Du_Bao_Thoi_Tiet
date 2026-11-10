@@ -175,6 +175,7 @@ def main() -> None:
 
     best_val_loss = float("inf")
     best_state = None
+    best_epoch = None
     train_losses: list[float] = []
     val_losses: list[float] = []
 
@@ -202,7 +203,10 @@ def main() -> None:
 
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            best_state = {key: value.detach().cpu() for key, value in model.state_dict().items()}
+            best_epoch = epoch
+            best_state = {
+                key: value.detach().cpu().clone() for key, value in model.state_dict().items()
+            }
 
         print(
             f"Epoch {epoch:02d}/{args.epochs} | "
@@ -218,6 +222,12 @@ def main() -> None:
     test_predictions = target_scaler.inverse_transform(test_predictions).reshape(-1)
     test_targets = target_scaler.inverse_transform(test_targets).reshape(-1)
     metrics = regression_metrics(test_targets, test_predictions)
+    # For each target, persistence predicts the final observed value in its input window.
+    test_history = test_table.matrix([args.target_column]).reshape(-1)
+    persistence = test_history[
+        args.sequence_length - 1 : args.sequence_length - 1 + len(test_targets)
+    ]
+    persistence_metrics = regression_metrics(test_targets, persistence)
 
     model_path = args.output_dir / f"{args.model}_weather_forecast_model.pt"
     torch.save(model.state_dict(), model_path)
@@ -241,6 +251,9 @@ def main() -> None:
             "device": str(device),
             "test_loss": test_loss,
             "metrics": metrics,
+            "best_epoch": best_epoch,
+            "best_validation_loss": best_val_loss,
+            "persistence_baseline": persistence_metrics,
             "data_path": str(args.data_path),
             "target_column": args.target_column,
             "feature_columns": feature_columns,
@@ -266,6 +279,8 @@ def main() -> None:
     print("\nFinal test metrics")
     print(f"MAE             : {metrics['mae']:.4f}")
     print(f"RMSE            : {metrics['rmse']:.4f}")
+    print(f"Persistence     : MAE={persistence_metrics['mae']:.4f}, "
+          f"RMSE={persistence_metrics['rmse']:.4f}")
     print(f"Artifacts saved : {args.output_dir.resolve()}")
 
 

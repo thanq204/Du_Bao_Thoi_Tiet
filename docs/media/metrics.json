@@ -1,12 +1,18 @@
 {
-  "model": "lstm",
+  "model": "rnn",
   "device": "cpu",
-  "test_loss": 0.10002389661967755,
+  "test_loss": 0.04980563353747129,
   "metrics": {
-    "mae": 0.923387885093689,
-    "rmse": 1.1695268154144287
+    "mae": 0.606338381767273,
+    "rmse": 0.7914003729820251
   },
-  "data_path": "data\\weather_data.csv",
+  "best_epoch": 9,
+  "best_validation_loss": 0.036989560816437006,
+  "persistence_baseline": {
+    "mae": 0.9243332743644714,
+    "rmse": 1.262259840965271
+  },
+  "data_path": "docs\\media\\weather_data.csv",
   "target_column": "temperature_2m",
   "feature_columns": [
     "temperature_2m",
@@ -31,12 +37,12 @@
     "test": 324
   },
   "config": {
-    "data_path": "data\\weather_data.csv",
+    "data_path": "docs\\media\\weather_data.csv",
     "time_column": "timestamp",
     "target_column": "temperature_2m",
     "feature_columns": "",
     "no_time_features": false,
-    "model": "lstm",
+    "model": "rnn",
     "epochs": 10,
     "batch_size": 32,
     "sequence_length": 24,
@@ -49,6 +55,6 @@
     "val_ratio": 0.15,
     "seed": 42,
     "device": "cpu",
-    "output_dir": "artifacts\\demo"
+    "output_dir": "artifacts\\benchmark-rnn"
   }
 }

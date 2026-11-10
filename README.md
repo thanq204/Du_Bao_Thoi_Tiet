@@ -1,4 +1,6 @@
-# Dự báo nhiệt độ bằng RNN, LSTM và GRU
+# Weather Temperature Forecasting | PyTorch
+
+Benchmark RNN, LSTM and GRU against a persistence baseline on hourly weather data. The benchmark uses a chronological split and selects checkpoints on validation loss.
 
 Dự án học sâu cho chuỗi thời gian: tải dữ liệu thời tiết theo giờ từ **Open-Meteo**, tạo cửa sổ quan sát lịch sử và huấn luyện mô hình **PyTorch** để dự đoán một giá trị nhiệt độ tại chân trời được chọn.
 
@@ -21,27 +23,24 @@ Ví dụ: dùng quan sát từ 00:00 đến 23:00 ngày hôm trước để dự
 | Dự báo nhiều bước thành một chuỗi tương lai | Chưa có |
 | API, giao diện web, triển khai hoặc inference CLI riêng | Chưa có |
 
-## Kết quả minh họa có thể tái tạo
+## Benchmark trên tập kiểm tra
 
-| Cấu hình | Giá trị |
-| --- | --- |
-| Địa điểm | TP.HCM, `10.8231, 106.6297` |
-| Dữ liệu | 01/01/2025–31/03/2025, múi giờ `Asia/Ho_Chi_Minh` |
-| Số dòng | 2.160; train 1.512 / validation 324 / test 324 |
-| Mô hình | LSTM, hidden size 64, 2 lớp, dropout 0,1 |
-| Huấn luyện | 10 epoch, batch size 32, Adam, learning rate 0,001, seed 42 |
-| Đầu vào / mục tiêu | 24 bước / 1 bước; 12 đặc trưng |
-| Thiết bị | CPU, Python 3.11.15, PyTorch 2.5.1+cpu, NumPy 1.26.4 |
-| MAE trên test | **0,9234 °C** |
-| RMSE trên test | **1,1695 °C** |
+Dữ liệu Open-Meteo theo giờ tại TP.HCM từ 01/01 đến 31/03/2025. Cả ba mô hình dùng cùng 2.160 dòng dữ liệu, chia theo thời gian 1.512 / 324 / 324, cùng seed 42 và tối đa 10 epoch trên CPU. Tập test tạo 300 cửa sổ, mỗi cửa sổ dùng 24 giờ để dự báo giờ tiếp theo. Baseline **persistence** dùng nhiệt độ ở giờ quan sát cuối.
 
-![Lịch sử huấn luyện](docs/media/loss_curve.png)
+| Mô hình | Epoch chọn theo validation | Test MAE (°C) | Test RMSE (°C) |
+| --- | ---: | ---: | ---: |
+| Persistence | — | 0.9243 | 1.2623 |
+| **RNN** | 9 | **0.6063** | **0.7914** |
+| GRU | 9 | 0.8075 | 1.0078 |
+| LSTM | 6 | 1.0774 | 1.3259 |
 
-Lần chạy minh họa ngày 05/11/2026 tạo 300 dự đoán trên tập test sau khi tạo cửa sổ. [metrics.json](docs/media/metrics.json) và [predictions.csv](docs/media/predictions.csv) lưu kết quả thực tế; số liệu có thể thay đổi theo phiên bản thư viện, thiết bị và dữ liệu API. Đây là một lần chạy minh họa, chưa phải kết luận mô hình tốt hơn baseline hoặc phương pháp khác. Các giới hạn của pipeline được nêu bên dưới.
+Trong lần chạy này, RNN giảm MAE **34,4%** so với persistence. GRU cũng cải thiện cả hai chỉ số, còn LSTM có sai số cao hơn baseline. Kết quả chỉ phản ánh một tập dữ liệu và một seed.
+
+Biểu đồ trên là kết quả RNN. Xem [benchmark JSON](docs/media/benchmark.json), [đường cong loss](docs/media/loss_curve.png) và [300 dự đoán test](docs/media/predictions.csv).
 
 ## Cài đặt
 
-Cấu hình đã chạy minh họa: Python 3.11 và PyTorch trên CPU. Không bắt buộc có GPU; cần Internet để tải dữ liệu.
+Cấu hình đã dùng cho benchmark gồm Python 3.11 và PyTorch trên CPU. Không bắt buộc có GPU; cần Internet để tải dữ liệu.
 
 ```bash
 git clone https://github.com/thanq204/Du_Bao_Thoi_Tiet.git
@@ -93,12 +92,12 @@ Dữ liệu được ghi vào `data/weather_data.csv`; script tự tạo thư m�
 python train.py --data-path data/weather_data.csv --model lstm --epochs 10 --device cpu --output-dir artifacts/demo
 ```
 
-Đây là lệnh dùng cho minh họa. Chạy `python train.py` không tham số sử dụng 30 epoch, `--device auto` và thư mục `artifacts/`.
+Đây là ví dụ huấn luyện LSTM. Chạy `python train.py` không tham số sử dụng 30 epoch, `--device auto` và thư mục `artifacts/`.
 
 Để thử với đúng bản dữ liệu đã tải cho minh họa, không cần gọi lại API:
 
 ```bash
-python train.py --data-path docs/media/weather_data.csv --model lstm --epochs 10 --device cpu --output-dir artifacts/demo
+python train.py --data-path docs/media/weather_data.csv --model rnn --epochs 10 --device cpu --output-dir artifacts/benchmark-rnn
 ```
 
 ### 3. So sánh các kiến trúc
@@ -200,7 +199,7 @@ Xem toàn bộ tùy chọn bằng `python train.py --help` hoặc `python script
 | File | Nội dung |
 | --- | --- |
 | `<model>_weather_forecast_model.pt` | `state_dict` của mô hình |
-| `metrics.json` | Cấu hình, đặc trưng, số dòng, test loss, MAE và RMSE |
+| `metrics.json` | Cấu hình, epoch tốt nhất, MAE/RMSE của mô hình và persistence |
 | `loss_curve.png` | Loss train và validation qua từng epoch |
 | `forecast_plot.png` | Nhiệt độ thực tế và dự đoán trên test |
 | `predictions.csv` | `timestamp`, `actual`, `predicted`, `error` |
@@ -209,9 +208,8 @@ Xem toàn bộ tùy chọn bằng `python train.py --help` hoặc `python script
 
 ## Giới hạn cần biết khi đánh giá
 
-- Chưa có baseline persistence, cross-validation theo thời gian hoặc đánh giá nhiều seed.
+- Benchmark có persistence và một lần chia theo thời gian. Cần thêm rolling backtest và nhiều seed để đánh giá độ ổn định.
 - Nội suy được thực hiện **trước khi chia tập**, nên dữ liệu có giá trị thiếu quanh ranh giới có thể dùng thông tin từ phần sau. Cần xử lý theo từng split nếu dùng để báo cáo thực nghiệm nghiêm ngặt.
-- Mã có ý định giữ epoch tốt nhất theo validation, nhưng `best_state` dùng `detach().cpu()` mà chưa clone. Khi chạy CPU, tensor có thể chia sẻ bộ nhớ với model, nên checkpoint chưa đảm bảo là epoch tốt nhất; số liệu minh họa phản ánh đúng mã hiện tại.
 - Loader không tự bổ sung timestamp bị khuyết hoặc resample về tần suất giờ. Cần kiểm tra dữ liệu đều bước trước khi diễn giải chân trời dự báo.
 - Checkpoint chỉ chứa trọng số, chưa lưu mean/std của scaler hoặc toàn bộ pipeline inference. Muốn dùng riêng cho dữ liệu mới cần bổ sung lưu/nạp scaler và đúng thứ tự đặc trưng.
 - Dự đoán test dùng các cửa sổ lịch sử thực tế, không phải dự báo tự hồi quy toàn bộ giai đoạn tương lai. Chưa có khoảng tin cậy hoặc dự báo xác suất.

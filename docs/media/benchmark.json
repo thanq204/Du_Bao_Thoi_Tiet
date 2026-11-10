@@ -1,0 +1,33 @@
+{
+  "seed": 42,
+  "epochs_per_model": 10,
+  "test_windows": 300,
+  "sequence_length": 24,
+  "forecast_horizon": 1,
+  "device": "cpu",
+  "metrics_unit": "celsius",
+  "scores": {
+    "rnn": {
+      "mae": 0.606338381767273,
+      "rmse": 0.7914003729820251,
+      "best_epoch": 9,
+      "best_validation_loss": 0.036989560816437006
+    },
+    "lstm": {
+      "mae": 1.0773510932922363,
+      "rmse": 1.3259278535842896,
+      "best_epoch": 6,
+      "best_validation_loss": 0.05794702060520649
+    },
+    "gru": {
+      "mae": 0.8075340390205383,
+      "rmse": 1.0077965259552002,
+      "best_epoch": 9,
+      "best_validation_loss": 0.04280592435970902
+    },
+    "persistence": {
+      "mae": 0.9243332743644714,
+      "rmse": 1.262259840965271
+    }
+  }
+}
